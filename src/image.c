@@ -182,7 +182,7 @@ void draw_detections(image im, int num, float thresh, box *boxes, float **probs,
     int i;
 
     for(i = 0; i < num; ++i){
-        int class = max_index(probs[i], classes);
+        int class = max_index_selective(probs[i], classes, names);
         float prob = probs[i][class];
         if(prob > thresh){
 
@@ -438,7 +438,7 @@ void show_image_cv(image p, const char *name)
     }
     cvShowImage(buff, disp);
 
-	{
+	if (0){
 		CvSize size;
 		{
 			size.width = disp->width, size.height = disp->height;

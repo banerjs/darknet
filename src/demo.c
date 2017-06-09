@@ -1,3 +1,5 @@
+#include <signal.h>
+
 #include "network.h"
 #include "detection_layer.h"
 #include "region_layer.h"
@@ -32,6 +34,8 @@ static image det  ;
 static image det_s;
 static image disp = {0};
 static CvCapture * cap;
+static int capture_closed = 0;
+static int close_writer = 0;
 static float fps = 0;
 static float demo_thresh = 0;
 
@@ -44,7 +48,9 @@ void *fetch_in_thread(void *ptr)
 {
     in = get_image_from_stream(cap);
     if(!in.data){
-        error("Stream closed.");
+		capture_closed = 1;
+        // error("Stream closed.");
+		return;
     }
     in_s = resize_image(in, net.w, net.h);
     return 0;
@@ -119,7 +125,13 @@ void demo(char *cfgfile, char *weightfile, float thresh, int cam_index, const ch
         cap = cvCaptureFromCAM(cam_index);
     }
 
-    if(!cap) error("Couldn't connect to webcam.\n");
+    if(!cap) error("Couldn't connect to video.\n");
+
+	// Open an output video
+	CvSize s = { .width = 1920, .height = 1080 };
+	static CvVideoWriter *writer;
+	writer = cvCreateVideoWriter("test.avi", -1, 30, s, 1);
+	if (!writer) error("Couldn't open output video.\n");
 
     layer l = net.layers[net.n-1];
     int j;
@@ -162,7 +174,7 @@ void demo(char *cfgfile, char *weightfile, float thresh, int cam_index, const ch
 
     double before = get_wall_time();
 
-    while(1){
+    while(!capture_closed){
         ++count;
         if(1){
             if(pthread_create(&fetch_thread, 0, fetch_in_thread, 0)) error("Thread creation failed");
@@ -170,6 +182,22 @@ void demo(char *cfgfile, char *weightfile, float thresh, int cam_index, const ch
 
             if(!prefix){
                 show_image(disp, "Demo");
+				if (writer)
+				{
+					IplImage *cvImage = cvCreateImage(s, IPL_DEPTH_8U, disp.c);
+					int step = cvImage->widthStep;
+					for (int y = 0; y < disp.h; ++y)
+					{
+						for (int x = 0; x < disp.w; ++x)
+						{
+							for (int k = 0; k < disp.c; ++k)
+							{
+								cvImage->imageData[y*step + x*disp.c + k] = (unsigned char)(get_pixel(disp, x, y, k) * 255);
+							}
+						}
+					}
+					cvWriteFrame(writer, cvImage);
+				}
                 int c = cvWaitKey(1);
                 if (c == 10){
                     if(frame_skip == 0) frame_skip = 60;
@@ -214,6 +242,7 @@ void demo(char *cfgfile, char *weightfile, float thresh, int cam_index, const ch
             before = after;
         }
     }
+	cvReleaseVideoWriter(&writer);
 }
 #else
 void demo(char *cfgfile, char *weightfile, float thresh, int cam_index, const char *filename, char **names, int classes, int frame_skip, char *prefix)
