@@ -103,11 +103,11 @@ YOLODLL_API Detector::~Detector()
 }
 
 
-YOLODLL_API std::vector<bbox_t> Detector::detect(std::string image_filename, float thresh)
+YOLODLL_API std::vector<bbox_t> Detector::detect(std::string image_filename, char ** class_names, float thresh)
 {
 	std::shared_ptr<image_t> image_ptr(new image_t, [](image_t *img) { if (img->data) free(img->data); delete img; });
 	*image_ptr = load_image(image_filename);
-	return detect(*image_ptr, thresh);
+	return detect(*image_ptr, class_names, thresh);
 }
 
 static image load_image_stb(char *filename, int channels)
@@ -154,7 +154,7 @@ YOLODLL_API void Detector::free_image(image_t m)
 	}
 }
 
-YOLODLL_API std::vector<bbox_t> Detector::detect(image_t img, float thresh)
+YOLODLL_API std::vector<bbox_t> Detector::detect(image_t img, char **class_names, float thresh)
 {
 
 	detector_gpu_t &detector_gpu = *reinterpret_cast<detector_gpu_t *>(detector_gpu_ptr.get());
@@ -189,7 +189,7 @@ YOLODLL_API std::vector<bbox_t> Detector::detect(image_t img, float thresh)
 
 	for (size_t i = 0; i < (l.w*l.h*l.n); ++i) {
 		box b = detector_gpu.boxes[i];
-		int const obj_id = max_index(detector_gpu.probs[i], l.classes);
+		int const obj_id = max_index_selective(detector_gpu.probs[i], l.classes, class_names);
 		float const prob = detector_gpu.probs[i][obj_id];
 		
 		if (prob > thresh) 

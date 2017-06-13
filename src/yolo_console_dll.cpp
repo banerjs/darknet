@@ -42,7 +42,7 @@ std::vector<std::string> objects_names_from_file(std::string const filename) {
 	std::ifstream file(filename);
 	std::vector<std::string> file_lines;
 	if (!file.is_open()) return file_lines;
-	for(std::string line; file >> line;) file_lines.push_back(line);
+	for(std::string line; std::getline(file, line);) file_lines.push_back(line);
 	std::cout << "object names loaded \n";
 	return file_lines;
 }
@@ -50,9 +50,19 @@ std::vector<std::string> objects_names_from_file(std::string const filename) {
 
 int main() 
 {
-	Detector detector("yolo-voc.cfg", "yolo-voc.weights");
+	Detector detector("C:\\Users\\t-sibane\\Documents\\Code\\darknet\\build\\darknet\\x64\\yolo.cfg", "C:\\Users\\t-sibane\\Documents\\Code\\darknet\\build\\darknet\\x64\\yolo.weights");
 
-	auto obj_names = objects_names_from_file("data/voc.names");
+	auto obj_names = objects_names_from_file("C:\\Users\\t-sibane\\Documents\\Code\\darknet\\build\\darknet\\x64\\data\\coco.names");
+	
+	// Convert to obj_names pointer
+	char **obj_names_c = NULL;
+	std::vector<char *> cstrings;
+	for (size_t i = 0; i < obj_names.size(); ++i)
+	{
+		cstrings.push_back(const_cast<char *>(obj_names[i].c_str()));
+	}
+	if (cstrings.empty()) throw new std::exception("Empty classes");
+	obj_names_c = cstrings.data();
 
 	while (true) 
 	{
@@ -68,7 +78,7 @@ int main()
 				cv::Mat frame;
 				detector.nms = 0.02;	// comment it - if track_id is not required
 				for(cv::VideoCapture cap(filename); cap >> frame, cap.isOpened();) {
-					std::vector<bbox_t> result_vec = detector.detect(frame, 0.2);
+					std::vector<bbox_t> result_vec = detector.detect(frame, obj_names_c, 0.2);
 					result_vec = detector.tracking(result_vec);	// comment it - if track_id is not required
 
 					draw_boxes(frame, result_vec, obj_names, 3);
@@ -77,7 +87,7 @@ int main()
 			}
 			else {	// image file
 				cv::Mat mat_img = cv::imread(filename);
-				std::vector<bbox_t> result_vec = detector.detect(mat_img);
+				std::vector<bbox_t> result_vec = detector.detect(mat_img, obj_names_c);
 				draw_boxes(mat_img, result_vec, obj_names);
 				show_result(result_vec, obj_names);
 			}
@@ -85,7 +95,7 @@ int main()
 			//std::vector<bbox_t> result_vec = detector.detect(filename);
 
 			auto img = detector.load_image(filename);
-			std::vector<bbox_t> result_vec = detector.detect(img);
+			std::vector<bbox_t> result_vec = detector.detect(img, obj_names_c);
 			detector.free_image(img);
 			show_result(result_vec, obj_names);
 #endif			
