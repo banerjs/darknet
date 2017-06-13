@@ -4,7 +4,7 @@
 #include <vector>
 #include <fstream>
 
-#define OPENCV
+// #define OPENCV
 
 #include "yolo_v2_class.hpp"	// imported functions from DLL
 
