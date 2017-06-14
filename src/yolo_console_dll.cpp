@@ -50,9 +50,9 @@ std::vector<std::string> objects_names_from_file(std::string const filename) {
 
 int main() 
 {
-	Detector detector("C:\\Users\\t-sibane\\Documents\\Code\\darknet\\build\\darknet\\x64\\yolo.cfg", "C:\\Users\\t-sibane\\Documents\\Code\\darknet\\build\\darknet\\x64\\yolo.weights");
+	Detector detector("C:\\Users\\t-sibane\\Documents\\Code\\darknet\\cfg\\yolo.cfg", "C:\\Users\\t-sibane\\Documents\\Code\\darknet\\data\\yolo.weights");
 
-	auto obj_names = objects_names_from_file("C:\\Users\\t-sibane\\Documents\\Code\\darknet\\build\\darknet\\x64\\data\\coco.names");
+	auto obj_names = objects_names_from_file("C:\\Users\\t-sibane\\Documents\\Code\\darknet\\data\\coco.names");
 	
 	// Convert to obj_names pointer
 	char **obj_names_c = NULL;
