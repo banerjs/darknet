@@ -36,4 +36,9 @@ Open and compile in Visual Studio 2015:
 
 Run `darknet_dll_test.exe` in the output directory to test your install.
 
+## Gotchas
+
+1. Make sure your file paths to the config files is correct.
+1. This version of YOLO only outputs those COCO classes that I think are useful in an indoor setting. In addition to the object class `person`, it looks only for those object classes in the `relevant_class_str` variable in the `src\utils.c` file. Check to make sure the class you're trying to detect is in COCO as well as in that variable.
+
 **Darknet can do a lot more, and you should check out the parent repositories of this repo to explore the full capabilities of this code**
